@@ -130,8 +130,97 @@ This includes the following:
 * The above is a training command for running the W2V+CMSC+RLM pipeline in fairseq-signals using Hydra configuration. The constituent parts are described below:
 - fairseq-hydra-train: Entry point for training with Hydra configs in fairseq-signals.
 - task.data=/path/to/output: Path to your preprocessed dataset (e.g., ECG signals prepared for classification).
-- model.num_labels=$num_labels: Number of output classes for classification. Replace $num_labels with the actual integer (e.g., 12 if you’re classifying 12 diagnostic categories).
-- model.model_path=/path/to/checkpoint.pt: Path to the pretrained checkpoint you’re fine‑tuning (e.g., a wav2vec model trained on ECG). For this purpose, a pretrained checkpoint named #'mimic_iv_ecg_physionet_pretrained.pt'# extracted from Hugging Face (https://huggingface.co/wanglab/ecg-fm) has been used. Even though the naming convention indicates the checkpoint has been trained using mimic_iv_ecg data, I have successfully been able to use it for PTB-XL data too, as I could not find any ready-made solution built for PTB-XL dataset till date.
+- model.num_labels=$num_labels: Number of output classes for classification. Replace $num_labels with the actual integer (83 for ptb-xl version and 164 for mimic-iv-ecg version).
+- model.model_path=/path/to/checkpoint.pt: Path to the pretrained checkpoint you’re fine‑tuning (e.g., a wav2vec model trained on ECG). For this purpose, a pretrained checkpoint named 'mimic_iv_ecg_physionet_pretrained.pt' extracted from Hugging Face (https://huggingface.co/wanglab/ecg-fm) has been used. Even though the naming convention indicates the checkpoint has been trained using mimic_iv_ecg data, I have successfully been able to use it for PTB-XL data too, as I could not find any ready-made solution built for PTB-XL dataset till date.
 - --config-dir ...:Points Hydra to the directory containing YAML configs for this experiment. Here it’s the ECG transformer grounding classification configs.
 - --config-name base_total: Selects the specific config file (base_total.yaml) from that directory. This defines hyperparameters like optimizer, learning rate, batch size, etc.
+
+* What W2V+CMSC+RLM means:
+- W2V → wav2vec backbone (self‑supervised ECG representation).
+- CMSC → Contrastive Multiscale Clustering (a pretraining/fusion strategy).
+- RLM → Representation Learning Module (extra grounding for classification).
+Together, this pipeline fine‑tunes a pretrained ECG encoder with classification grounding.
+
+4. For Resnet + Attention model:
+
+      $ fairseq-hydra-train task.data=/path/to/output \
+            model.num_labels=$num_labels \
+            --config-dir /fairseq-signals/examples/scratch/ecg_classification/resnet \
+            --config-name nejedly2021_total
+
+*Notes:*
+* *Resnet + Attention* model fine‑tunes or trains a ResNet ECG classifier on your dataset, following the experimental setup described in Nejedly’s 2021 paper. It is part of the scratch examples in fairseq-signals, meaning it is a baseline training recipe rather than a pretrained model fine‑tuning. The constituent parts are described below:
+- fairseq-hydra-train: Entry point for training models in fairseq-signals using Hydra configuration.
+- task.data=/path/to/output: Path to your preprocessed ECG dataset (the directory containing training/validation/test splits).
+- model.num_labels=$num_labels: Number of output classes for classification (83 for ptb-xl version and 164 for mimic-iv-ecg version).
+- --config-dir ...resnet: Points Hydra to the configuration directory for ResNet‑based ECG classification experiments.
+- --config-name nejedly2021_total: Selects the specific YAML config file (nejedly2021_total.yaml) that defines the training setup used in Nejedly et al. (2021). This config typically specifies:
+      - ResNet architecture parameters
+      - Optimizer and learning rate schedule
+      - Training epochs and batch size
+      - Evaluation metrics
+
+5. For SE-WRN model:
+
+      $ fairseq-hydra-train task.data=/path/to/output \
+            model.num_labels=$num_labels \
+            --config-dir /fairseq-signals/examples/scratch/ecg_classification/resnet \
+            --config-name se_wrn_total
+
+*Notes:*
+* The above command is another Hydra‑based training recipe in fairseq‑signals, this time using a Squeeze‑and‑Excitation Wide Residual Network (SE‑WRN) for ECG classification. 
+- fairseq-hydra-train: The training launcher that uses Hydra configs.
+- task.data=/path/to/output: Path to your preprocessed ECG dataset (train/valid/test splits).
+- model.num_labels=$num_labels: Number of diagnostic categories you want to classify.(83 for ptb-xl version and 164 for mimic-iv-ecg version).
+- --config-dir ...resnet: Points Hydra to the directory containing ResNet‑style ECG classification configs.
+- --config-name se_wrn_total: Selects the YAML config file for the SE‑WRN model.
+      - SE: Squeeze‑and‑Excitation blocks, which adaptively recalibrate channel weights to emphasize informative features.
+      - WRN: Wide Residual Network, a ResNet variant with wider layers for better capacity.
+      - total: typically indicates the full training setup (optimizer, scheduler, augmentation, etc.).
+
+# LLM Modeling
+1. Same mapping step mentioned as step 1 in the above 'Run QA Experiments' section.
+
+2. Same preprocessing step mentioned as step 2 in the above 'Run QA Experiments' section.
+
+3. Sample 10% from the test set.
+
+      $ python llm_modeling/random_sample.py /path/to/output \
+            --subset test \
+   
+* *Notes:*
+  - It will sample 10% from test.tsv in the /path/to/output/ directory and output the sampled manifest file test_sampled.tsv in the same directory.
+  - /path/to/output: This is the root directory which contains the preprocessed .mat files along with .TSV files generated after the preprocessing step.
+
+4. Run the experiments:
+
+      $ python llm_modeling/llm_modeling.py \
+          +openai_model=$model_name \
+          +openai_api_key=$api_key \
+          +ptbxl_or_mimic_iv=ptbxl \
+          common_eval.path=/path/to/checkpoint.pt \
+          task.data=/path/to/output \
+          dataset.valid_subset=test_sampled \
+          --config-dir llm_modeling/config \
+          --config-name infer_llm
+
+* This command is running inference with an LLM‑augmented ECG model using the llm_modeling.py script. Uses the same pretrained model checkpoint as discussed for upperbound experiments. 
+- python llm_modeling/llm_modeling.py
+Launches the custom script that integrates ECG encoders with large language models (LLMs).
+- +openai_model=$model_name
+Specifies which OpenAI model to use (e.g., gpt-4, gpt-3.5-turbo, etc.).
+- +openai_api_key=$api_key
+Passes your OpenAI API key so the script can query the LLM.
+- +ptbxl_or_mimic_iv=ptbxl
+Chooses the dataset source. Here, it’s set to PTB‑XL (you could switch to mimic_iv for MIMIC‑IV ECG).
+- common_eval.path=/path/to/checkpoint.pt
+Path to the pretrained ECG encoder checkpoint you want to evaluate with the LLM.
+- task.data=/path/to/output
+Directory containing your preprocessed ECG dataset.
+- dataset.valid_subset=test_sampled
+Indicates which subset of the dataset to run inference on (here, a sampled test set).
+- --config-dir llm_modeling/config
+Points Hydra to the configuration directory for LLM modeling.
+- --config-name infer_llm
+Selects the specific YAML config (infer_llm.yaml) that defines inference settings (batch size, fusion module, evaluation metrics, etc.).
 
