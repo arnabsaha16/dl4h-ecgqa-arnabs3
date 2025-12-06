@@ -178,7 +178,7 @@ Together, this pipeline fine‑tunes a pretrained ECG encoder with classificatio
       - WRN: Wide Residual Network, a ResNet variant with wider layers for better capacity.
       - total: typically indicates the full training setup (optimizer, scheduler, augmentation, etc.).
 
-# LLM Modeling
+# Instructions to run LLM Modeling steps
 1. Same mapping step mentioned as step 1 in the above 'Run QA Experiments' section.
 
 2. Same preprocessing step mentioned as step 2 in the above 'Run QA Experiments' section.
