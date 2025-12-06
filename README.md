@@ -22,27 +22,17 @@ Data Extraction
 
 2. MIMIC-IV-ECG: This is a larger ECG dataset also available in Physionet (https://www.physionet.org/content/mimic-iv-ecg/1.0/). The detailed steps to download and use this data is provided in the given link. The approach I used for this dataset is the same as for PTB-XL.
 
+Note: MIMIC-IV-ECG dataset is quite large, so I created a custom logic to use only a small subset of the data files for processing. The  
+
 # Other prerequisites
 This includes the following:
 1. 
 
 # Instructions to run ECG-QA experiments
 1. Map file paths of ECGs with Question-Answer samples - For either PTB-XL or MIMIC-IV-ECG datasets, the first step is to map the ECG waveform files to their corresponding QA samples (or vice versa) since these two datasets are available in the public repositories separately. The command to run for this step looks as follows:
-from google.colab import drive
-drive.mount('/content/drive', force_remount=True)
 
-import zipfile, os
 
-# Extract PTB-XL dataset (Courtesy: https://physionet.org/content/ptb-xl/1.0.3/)
-with zipfile.ZipFile("/content/DL4H/ECG_Datasets/ptb-xl-raw-dataset.zip", 'r') as zip_ref:
-    zip_ref.extractall("/content/datasets/")
-
-!ls /content/datasets/ptb-xl-a-large-publicly-available-electrocardiography-dataset-1.0.1/
-
-# Extract MIMIC-IV-ECG dataset (Courtesy: https://physionet.org/content/mimic-iv-ecg/1.0/)
-with zipfile.ZipFile("/content/DL4H/ECG_Datasets/mimic-iv-ecg-raw-dataset.zip", 'r') as zip_ref:
-    zip_ref.extractall("/content/datasets/")
-
-2. 
-3. 
+*Note*: Please refer the README.md file of the official Github repository for this research paper - https://github.com/Jwoo5/ecg-qa for the following details:
+- Dataset structure of the 2 repositories, both for the ECG waveforms and Question-Answer samples
+- 
 
