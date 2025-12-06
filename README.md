@@ -1,4 +1,4 @@
-# Electrocardiogram–Language Model for Few-Shot Question Answering
+# Electrocardiogram–Language Model for Few-Shot Question Answering - Replication of research paper
 This repository contains the code used for Electrocardiogram–Language Model for Few-Shot Question Answering with Meta Learning (published at CHIL 2025) and related implementation instructions. You can watch a brief project talk here: 
 
 # Citation
@@ -18,9 +18,13 @@ Electrocardiogram (ECG) interpretation is a complex clinical task that requires 
 # Data setup
 Before starting on the modeling and experimentation aspects, I would like to highlight the prerequisites in terms of ECG waveforms and Question Answer related data access.
 Data Extraction
-1. PTB-XL: This ECG repository is available to access in multiple ways explained in the following Physionet website: https://physionet.org/content/ptb-xl/1.0.3/. The approach taken by me was to download the .ZIP file as a one-time effort, extract all data files from the same and store in local drive to run the preprocessing and modeling steps. For running some specific steps where the data volume was significant and I needed the processing to complete sooner, I ran them on a paid GPU Google Colab environment even though this is not mandatory. For this specific scenario, I connected to the data using the .ZIP file approach and extracted the files dynamically during runtime. Required python packages to be imported to the program for following this approach are: requests, zipfile and io.
+1. PTB-XL: This ECG repository is available to access in multiple ways explained in the following Physionet website: https://physionet.org/content/ptb-xl/1.0.3/. The approach taken by me was to download the .ZIP file as a one-time effort, extract all data files from the same and store in local drive to run the preprocessing and modeling steps. For running some specific steps where the data volume was significant and I needed the processing to complete sooner, I ran them on a paid GPU Google Colab environment even though this is not mandatory. For this specific scenario, I connected to the data using the .ZIP file (uploaded in Google Drive) approach and extracted the files dynamically during runtime.
 
-2. MIMIC-IV-ECG: This is a much larger ECG dataset also available in Physionet (https://www.physionet.org/content/mimic-iv-ecg/1.0/). The detailed steps to download and use this data is provided in the given link. The approach I used for this dataset is the same as for PTB-XL.
+      $ from google.colab import drive drive.mount('/content/drive', force_remount=True)
+      $ with zipfile.ZipFile("/content/drive/MyDrive/DL4H/ECG_Datasets/ptb-xl-raw-dataset.zip", 'r') as zip_ref:
+               zip_ref.extractall("/content/datasets/")
+
+3. MIMIC-IV-ECG: This is a much larger ECG dataset also available in Physionet (https://www.physionet.org/content/mimic-iv-ecg/1.0/). The detailed steps to download and use this data is provided in the given link. The approach I used for this dataset is the same as for PTB-XL.
 
 Note: MIMIC-IV-ECG dataset is quite large and failed to run after mapping step on all occasions, so I created a custom logic to use only a small subset of the data files for processing. The code has been uploaded to this repository for reference. 
 
@@ -36,6 +40,7 @@ This includes the following:
       $ pip install wandb
       $ pip install wfdb
       $ import pandas as pd
+      $ import zip, os (optional, required if connecting to online storage e.g. Google Drive for loading raw data in local drive)
 * Some environment variables also needed to be set to specific values:
       $ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 * Clone "ecg-qa" repository to local environment
@@ -55,6 +60,7 @@ This includes the following:
 
 # Instructions to run ECG-QA experiments
 1. Map file paths of ECGs with Question-Answer samples - For either PTB-XL or MIMIC-IV-ECG datasets, the first step is to map the ECG waveform files to their corresponding QA samples (or vice versa) since these two datasets are available in the public repositories separately. The command to run for this step looks as follows:
+
 *PTB-XL:*
 ```shell script
       $ python mapping_ptbxl_samples.py ecgqa/ptbxl \
@@ -67,9 +73,33 @@ This includes the following:
           --mimic-iv-ecg-data-dir $mimic_iv_ecg_dir \
           --dest $dest_dir
 ```
-As same with the above, you can also process the template version of ECG-QA by passing `ecgqa/mimic-iv-ecg/template`.  
-`$mimic_iv_ecg_dir` should be set to the root directory of the MIMIC-IV-ECG dataset which contains `files/` directory and `record_list.csv` file. If you do not specify this argument, the script will automatically download the required MIMIC-IV-ECG data to the cache directory ($HOME/.cache/ecgqa/mimic-iv-ecg).  
-Note that `$dest_dir` is set to `./output/mimic-iv-ecg` by default.
+*Notes:*
+* $ptbxl_dir and $mimic_iv_ecg_dir refer to the root folder of the respective dataset (after download) in the current system used for processing this step.
+* $dest_dir in both cases refers to the location in which the JSON files which contain the mapping between ECG IDs and the Question Answer templates is to be stored.
+* Sampling is done to split the available data into training, validation and test datasets. The subsequent steps will consider this grouping for further processing.
+
+2. Pre-process ECG-QA dataset.
+
+      $ python fairseq_signals/data/ecg_text/preprocess/preprocess_ecgqa.py /path/to/ecgqa \
+          --dest /path/to/output \
+          --apply_paraphrase
+
+*Notes:*
+* /path/to/ecgqa is the same location as $dest_dir discussed in previous step.
+* If you run with --apply_paraphrase, the scripts will process the paraphrased version of ECG-QA dataset. Otherwise, it will process the template version.
+* /path/to/output is the location in which the .mat (Microsoft Access Table) files corresponding to the ECG data are generated, along with one .tsv (Tab separated values) file for each of the 3 groups where all the files are listed along with information on the count of samples across a specific count of leads is captured. The directory path for all the files is captured in the first row for the next steps.  
+
+3. Run experiments.
+
+      $ fairseq-hydra-train task.data=/path/to/output/paraphrased \
+          model.num_labels=$num_labels \
+          --config-dir /fairseq-signals/examples/scratch/ecg_question_answering/$model_name \
+          --config-name $model_config_name
+*Notes:*
+* $num_labels: the number of answers specified in answers.csv (103 for ptb-xl version and 187 for mimic-iv-ecg version). The answer *none* is not considered.
+* $model_name: the name of the ECG-QA model (e.g., ecg_transformer)
+* $model_config_name the name of the configuration file (e.g., base)
+
 
 
 
