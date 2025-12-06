@@ -81,8 +81,8 @@ This includes the following:
 2. Pre-process ECG-QA dataset.
 
       $ python fairseq_signals/data/ecg_text/preprocess/preprocess_ecgqa.py /path/to/ecgqa \
-          --dest /path/to/output \
-          --apply_paraphrase
+            --dest /path/to/output \
+            --apply_paraphrase
 
 *Notes:*
 * /path/to/ecgqa is the same location as $dest_dir discussed in previous step.
@@ -92,15 +92,46 @@ This includes the following:
 3. Run experiments.
 
       $ fairseq-hydra-train task.data=/path/to/output/paraphrased \
-          model.num_labels=$num_labels \
-          --config-dir /fairseq-signals/examples/scratch/ecg_question_answering/$model_name \
-          --config-name $model_config_name
+            model.num_labels=$num_labels \
+            --config-dir /fairseq-signals/examples/scratch/ecg_question_answering/$model_name \
+            --config-name $model_config_name
+
 *Notes:*
 * $num_labels: the number of answers specified in answers.csv (103 for ptb-xl version and 187 for mimic-iv-ecg version). The answer *none* is not considered.
 * $model_name: the name of the ECG-QA model (e.g., ecg_transformer)
 * $model_config_name the name of the configuration file (e.g., base)
 
 
+# Instructions to run upperbound experiments
+1. Same mapping step mentioned as step 1 in the above 'Run QA Experiments' section.
 
+2. Pre-process ECG-QA dataset to be compatible with upperbound experiments.
 
+      $ python fairseq_signals/data/ecg_text/preprocess/preprocess_ecgqa_for_classification.py /path/to/ecgqa \
+            --dest /path/to/output
+
+*Notes:*
+* /path/to/ecgqa is the root location (folder) of the mapping step output.
+* /path/to/output is the output path where all the composite metadata about the ECG sample after preprocessing is stored. The naming convention is different from the preprocessed files in the QA experiments, in the sense that these files generally capture the mapping between ECG .mat files and the various conditions (groups) into which the given file can be classified into. For example, name of 10000_0_1_2_4_5_10_11.mat indicate the following:
+- 10000 → Usually the record ID or patient/sample identifier. In preprocessing pipelines, each ECG recording is assigned a unique integer ID.
+- 0_1_2_4_5_10_11 → These are the class labels (diagnostic codes) associated with that ECG.
+- During preprocessing for classification, multiple labels are often concatenated with underscores to indicate that this sample belongs to several classes simultaneously.
+- For example, 0, 1, 2, 4, 5, 10, 11 might correspond to specific diagnostic categories (e.g., myocardial infarction, conduction disturbance, hypertrophy, etc.) depending on the label mapping file
+
+3. For W2V+CMSC+RLM:
+
+      $ fairseq-hydra-train task.data=/path/to/output \
+            model.num_labels=$num_labels \
+            model.model_path=/path/to/checkpoint.pt \
+            --config-dir /fairseq-signals/examples/w2v_cmsc/config/finetuning/ecg_transformer/grounding_classification \
+            --config-name base_total
+
+*Notes:*
+* The above is a training command for running the W2V+CMSC+RLM pipeline in fairseq-signals using Hydra configuration. The constituent parts are described below:
+- fairseq-hydra-train: Entry point for training with Hydra configs in fairseq-signals.
+- task.data=/path/to/output: Path to your preprocessed dataset (e.g., ECG signals prepared for classification).
+- model.num_labels=$num_labels: Number of output classes for classification. Replace $num_labels with the actual integer (e.g., 12 if you’re classifying 12 diagnostic categories).
+- model.model_path=/path/to/checkpoint.pt: Path to the pretrained checkpoint you’re fine‑tuning (e.g., a wav2vec model trained on ECG). For this purpose, a pretrained checkpoint named #'mimic_iv_ecg_physionet_pretrained.pt'# extracted from Hugging Face (https://huggingface.co/wanglab/ecg-fm) has been used. Even though the naming convention indicates the checkpoint has been trained using mimic_iv_ecg data, I have successfully been able to use it for PTB-XL data too, as I could not find any ready-made solution built for PTB-XL dataset till date.
+- --config-dir ...:Points Hydra to the directory containing YAML configs for this experiment. Here it’s the ECG transformer grounding classification configs.
+- --config-name base_total: Selects the specific config file (base_total.yaml) from that directory. This defines hyperparameters like optimizer, learning rate, batch size, etc.
 
