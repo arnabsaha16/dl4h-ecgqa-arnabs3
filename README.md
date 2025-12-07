@@ -18,17 +18,17 @@ Electrocardiogram (ECG) interpretation is a complex clinical task that requires 
 # Data download and setup
 Before starting on the modeling and experimentation aspects, I would like to highlight the prerequisites in terms of ECG waveforms and Question Answer related data access.
 1. PTB-XL: This ECG repository is available to access in multiple ways explained in Physionet (https://physionet.org/content/ptb-xl/1.0.3/). The approach taken by me was to download the .ZIP file as a one-time effort, extract all data files from the same and store in local drive to run the preprocessing and modeling steps. For running some specific steps where the data volume was significant and I needed the processing to complete sooner, I ran them on a paid GPU Google Colab environment even though this is not mandatory. For this specific scenario, I connected to the data using the .ZIP file (uploaded in Google Drive) approach and extracted the files dynamically during runtime.
-
+```shell script
       $ from google.colab import drive drive.mount('/content/drive', force_remount=True)
       $ with zipfile.ZipFile("/content/drive/MyDrive/DL4H/ECG_Datasets/ptb-xl-raw-dataset.zip", 'r') as zip_ref:
                zip_ref.extractall("/content/datasets/")
-
+```
 2. MIMIC-IV-ECG: This is a much larger ECG dataset also available in Physionet (https://www.physionet.org/content/mimic-iv-ecg/1.0/). The detailed steps to download and use this data is provided in the given link. The approach I used for this dataset is the same as for PTB-XL.
-
+```shell script
       $ from google.colab import drive drive.mount('/content/drive', force_remount=True)
       $ with zipfile.ZipFile("/content/drive/MyDrive/DL4H/ECG_Datasets/mimic-iv-raw-dataset.zip", 'r') as zip_ref:
                zip_ref.extractall("/content/datasets/")
-
+```
 Note: MIMIC-IV-ECG dataset is quite large and failed to run after mapping step on all occasions, so I created a custom logic to use only a small subset of the data files for processing. The code has been uploaded to this repository for reference. 
 
 # Other system prerequisites
