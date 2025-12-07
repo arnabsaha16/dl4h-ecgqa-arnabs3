@@ -42,7 +42,7 @@ This includes the following:
       $ pip install --upgrade matplotlib
       $ pip install transformers==4.30.2
       $ pip install wandb
-      $ pip install wfdb
+      $ pip install wfdb, wandb, openai
       $ import pandas as pd
       $ import zip, os (optional, required if connecting to online storage e.g. Google Drive for loading raw data in local drive)
 * Some environment variables also needed to be set to specific values:
