@@ -38,14 +38,16 @@ This includes the following:
 * Python version >= 3.6, and <= 3.9
 * For training new models, you'll also need an NVIDIA GPU. For reference, some of the processing done to replicate the results of this paper was performed using NVIDIA® A100 and NVIDIA® T4 single GPUs on Google Colab environment.
 * Install and import the following python packages:
+
+```shell script
       - $ pip install tqdm pandas
       - $ pip install --upgrade matplotlib
       - $ pip install transformers==4.30.2
       - $ pip install wandb
       - $ pip install wfdb, wandb, openai
-      - $ import pandas as pd
-      - $ import zip, os (optional, required if connecting to online storage e.g. Google Drive for loading raw data in local drive)
-  
+      - $ import pandas
+```
+*Note:* $import zip, os may be required if connecting to online storage e.g. Google Drive for loading raw data in local drive.
 * Some environment variables also needed to be set to specific values:
       $ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 * Clone "ecg-qa" repository to local environment
