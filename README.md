@@ -83,10 +83,11 @@ This includes the following:
 * Sampling is done to split the available data into training, validation and test datasets. The subsequent steps will consider this grouping for further processing.
 
 2. Pre-process ECG-QA dataset.
-
+```shell script
       $ python fairseq_signals/data/ecg_text/preprocess/preprocess_ecgqa.py /path/to/ecgqa \
             --dest /path/to/output \
             --apply_paraphrase
+```
 
 *Notes:*
 * /path/to/ecgqa is the same location as $dest_dir discussed in previous step.
@@ -94,11 +95,12 @@ This includes the following:
 * /path/to/output is the location in which the .mat (Microsoft Access Table) files corresponding to the ECG data are generated, along with one .tsv (Tab separated values) file for each of the 3 groups where all the files are listed along with information on the count of samples across a specific count of leads is captured. The directory path for all the files is captured in the first row for the next steps.  
 
 3. Run experiments.
-
+```shell script
       $ fairseq-hydra-train task.data=/path/to/output/paraphrased \
             model.num_labels=$num_labels \
             --config-dir /fairseq-signals/examples/scratch/ecg_question_answering/$model_name \
             --config-name $model_config_name
+```
 
 *Notes:*
 * $num_labels: the number of answers specified in answers.csv (103 for ptb-xl version and 187 for mimic-iv-ecg version). The answer *none* is not considered.
@@ -123,13 +125,13 @@ This includes the following:
 - For example, 0, 1, 2, 4, 5, 10, 11 might correspond to specific diagnostic categories (e.g., myocardial infarction, conduction disturbance, hypertrophy, etc.) depending on the label mapping file
 
 3. For W2V+CMSC+RLM:
-
+```shell script
       $ fairseq-hydra-train task.data=/path/to/output \
             model.num_labels=$num_labels \
             model.model_path=/path/to/checkpoint.pt \
             --config-dir /fairseq-signals/examples/w2v_cmsc/config/finetuning/ecg_transformer/grounding_classification \
             --config-name base_total
-
+```
 *Notes:*
 * The above is a training command for running the W2V+CMSC+RLM pipeline in fairseq-signals using Hydra configuration. The constituent parts are described below:
 - fairseq-hydra-train: Entry point for training with Hydra configs in fairseq-signals.
@@ -146,12 +148,12 @@ This includes the following:
 Together, this pipeline fine‑tunes a pretrained ECG encoder with classification grounding.
 
 4. For Resnet + Attention model:
-
+```shell script
       $ fairseq-hydra-train task.data=/path/to/output \
             model.num_labels=$num_labels \
             --config-dir /fairseq-signals/examples/scratch/ecg_classification/resnet \
             --config-name nejedly2021_total
-
+```
 *Notes:*
 * *Resnet + Attention* model fine‑tunes or trains a ResNet ECG classifier on your dataset, following the experimental setup described in Nejedly’s 2021 paper. It is part of the scratch examples in fairseq-signals, meaning it is a baseline training recipe rather than a pretrained model fine‑tuning. The constituent parts are described below:
 - fairseq-hydra-train: Entry point for training models in fairseq-signals using Hydra configuration.
@@ -165,12 +167,12 @@ Together, this pipeline fine‑tunes a pretrained ECG encoder with classificatio
       - Evaluation metrics
 
 5. For SE-WRN model:
-
+```shell script
       $ fairseq-hydra-train task.data=/path/to/output \
             model.num_labels=$num_labels \
             --config-dir /fairseq-signals/examples/scratch/ecg_classification/resnet \
             --config-name se_wrn_total
-
+```
 *Notes:*
 * The above command is another Hydra‑based training recipe in fairseq‑signals, this time using a Squeeze‑and‑Excitation Wide Residual Network (SE‑WRN) for ECG classification. 
 - fairseq-hydra-train: The training launcher that uses Hydra configs.
@@ -188,16 +190,17 @@ Together, this pipeline fine‑tunes a pretrained ECG encoder with classificatio
 2. Same preprocessing step mentioned as step 2 in the above 'Run QA Experiments' section.
 
 3. Sample 10% from the test set.
-
+```shell script
       $ python llm_modeling/random_sample.py /path/to/output \
             --subset test \
-   
+```
+
 * *Notes:*
   - It will sample 10% from test.tsv in the /path/to/output/ directory and output the sampled manifest file test_sampled.tsv in the same directory.
   - /path/to/output: This is the root directory which contains the preprocessed .mat files along with .TSV files generated after the preprocessing step.
 
 4. Run the experiments:
-
+```shell script
       $ python llm_modeling/llm_modeling.py \
           +openai_model=$model_name \
           +openai_api_key=$api_key \
@@ -207,6 +210,7 @@ Together, this pipeline fine‑tunes a pretrained ECG encoder with classificatio
           dataset.valid_subset=test_sampled \
           --config-dir llm_modeling/config \
           --config-name infer_llm
+```
 
 * This command is running inference with an LLM‑augmented ECG model using the llm_modeling.py script. Uses the same pretrained model checkpoint as discussed for upperbound experiments. 
 - python llm_modeling/llm_modeling.py
