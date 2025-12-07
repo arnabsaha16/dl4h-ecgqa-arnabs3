@@ -58,9 +58,9 @@ This includes the following:
       $ pip install --editable ./
 * Importing pretrained checkpoints (around 1 GB) related to upperbound experiments for W2V+CMSC+RLM and for LLM modeling using OpenAI models like gpt-4.1. These are readily available in the Hugging Face repository (https://huggingface.co/wanglab/ecg-fm) related to one of the reference papers () provided within the above Github repositories.  
 
-*Note:* Referring to the last point above, there is dependency on 2 Github repositories: Jwoo5/ecg-qa and Jwoo5/fairseq-signals for this paper. The same will need to be cloned to the runtime environment used for running the implementation steps explained here. However, only the fairseq-signals codebase needs installation that too in 'editable' mode installation, which means the package is linked to your local source tree. Any changes you make to the code after installation are immediately reflected without needing to reinstall.
-
-*Note*: Please refer the README.md file of the official Github repository for this research paper - https://github.com/Jwoo5/ecg-qa (along with the README file added in the fairseq-signals repository discussed above) for the following details:
+*Notes:* 
+1. Referring to the last point above, there is dependency on 2 Github repositories: Jwoo5/ecg-qa and Jwoo5/fairseq-signals for this paper. The same will need to be cloned to the runtime environment used for running the implementation steps explained here. However, only the fairseq-signals codebase needs installation that too in 'editable' mode installation, which means the package is linked to your local source tree. Any changes you make to the code after installation are immediately reflected without needing to reinstall.
+2. Please refer the README.md file of the official Github repository for this research paper - https://github.com/Jwoo5/ecg-qa (along with the README file added in the fairseq-signals repository discussed above) for the following details:
 - Dataset structure of the 2 repositories, both for the ECG waveforms and Question-Answer samples
 - Codelines to read a sample ECG data as well as already mapped ECG IDs to QA samples pre-loaded into the ECG-QA repository. The ECG files are mapped to both the template and paraphrased versions of the Questions in the QA dataset and the resulting mapping JSON files are stored in separate folders.
 - Most of the preprocessing, experimentation and LLM modeling steps listed below, although some of the codes needed to be modified (copies of those programs uploaded in this repository) to make it compatible with the Python version and its dependencies available as of the documentation of this paper.
@@ -120,8 +120,7 @@ This includes the following:
             --dest /path/to/output
 
 *Notes:*
-* /path/to/ecgqa is the root location (folder) of the mapping step output.
-* /path/to/output is the output path where all the composite metadata about the ECG sample after preprocessing is stored. The naming convention is different from the preprocessed files in the QA experiments, in the sense that these files generally capture the mapping between ECG .mat files and the various conditions (groups) into which the given file can be classified into. For example, name of 10000_0_1_2_4_5_10_11.mat indicate the following:
+/path/to/ecgqa is the root location (folder) of the mapping step output. /path/to/output is the output path where all the composite metadata about the ECG sample after preprocessing is stored. The naming convention is different from the preprocessed files in the QA experiments, in the sense that these files generally capture the mapping between ECG .mat files and the various conditions (groups) into which the given file can be classified into. For example, name of 10000_0_1_2_4_5_10_11.mat indicate the following:
 - 10000 → Usually the record ID or patient/sample identifier. In preprocessing pipelines, each ECG recording is assigned a unique integer ID.
 - 0_1_2_4_5_10_11 → These are the class labels (diagnostic codes) associated with that ECG.
 - During preprocessing for classification, multiple labels are often concatenated with underscores to indicate that this sample belongs to several classes simultaneously.
@@ -136,7 +135,7 @@ This includes the following:
             --config-name base_total
 ```
 *Notes:*
-* The above is a training command for running the W2V+CMSC+RLM pipeline in fairseq-signals using Hydra configuration. The constituent parts are described below:
+The above is a training command for running the W2V+CMSC+RLM pipeline in fairseq-signals using Hydra configuration. The constituent parts are described below:
 - fairseq-hydra-train: Entry point for training with Hydra configs in fairseq-signals.
 - task.data=/path/to/output: Path to your preprocessed dataset (e.g., ECG signals prepared for classification).
 - model.num_labels=$num_labels: Number of output classes for classification. Replace $num_labels with the actual integer (83 for ptb-xl version and 164 for mimic-iv-ecg version).
@@ -144,7 +143,7 @@ This includes the following:
 - --config-dir ...:Points Hydra to the directory containing YAML configs for this experiment. Here it’s the ECG transformer grounding classification configs.
 - --config-name base_total: Selects the specific config file (base_total.yaml) from that directory. This defines hyperparameters like optimizer, learning rate, batch size, etc.
 
-* What W2V+CMSC+RLM means:
+What W2V+CMSC+RLM means:
 - W2V → wav2vec backbone (self‑supervised ECG representation).
 - CMSC → Contrastive Multiscale Clustering (a pretraining/fusion strategy).
 - RLM → Representation Learning Module (extra grounding for classification).
@@ -158,7 +157,7 @@ Together, this pipeline fine‑tunes a pretrained ECG encoder with classificatio
             --config-name nejedly2021_total
 ```
 *Notes:*
-* *Resnet + Attention* model fine‑tunes or trains a ResNet ECG classifier on your dataset, following the experimental setup described in Nejedly’s 2021 paper. It is part of the scratch examples in fairseq-signals, meaning it is a baseline training recipe rather than a pretrained model fine‑tuning. The constituent parts are described below:
+*Resnet + Attention* model fine‑tunes or trains a ResNet ECG classifier on your dataset, following the experimental setup described in Nejedly’s 2021 paper. It is part of the scratch examples in fairseq-signals, meaning it is a baseline training recipe rather than a pretrained model fine‑tuning. The constituent parts are described below:
 - fairseq-hydra-train: Entry point for training models in fairseq-signals using Hydra configuration.
 - task.data=/path/to/output: Path to your preprocessed ECG dataset (the directory containing training/validation/test splits).
 - model.num_labels=$num_labels: Number of output classes for classification (83 for ptb-xl version and 164 for mimic-iv-ecg version).
@@ -177,7 +176,7 @@ Together, this pipeline fine‑tunes a pretrained ECG encoder with classificatio
             --config-name se_wrn_total
 ```
 *Notes:*
-* The above command is another Hydra‑based training recipe in fairseq‑signals, this time using a Squeeze‑and‑Excitation Wide Residual Network (SE‑WRN) for ECG classification. 
+The above command is another Hydra‑based training recipe in fairseq‑signals, this time using a Squeeze‑and‑Excitation Wide Residual Network (SE‑WRN) for ECG classification. 
 - fairseq-hydra-train: The training launcher that uses Hydra configs.
 - task.data=/path/to/output: Path to your preprocessed ECG dataset (train/valid/test splits).
 - model.num_labels=$num_labels: Number of diagnostic categories you want to classify.(83 for ptb-xl version and 164 for mimic-iv-ecg version).
@@ -215,7 +214,7 @@ Together, this pipeline fine‑tunes a pretrained ECG encoder with classificatio
           --config-name infer_llm
 ```
 
-* This command is running inference with an LLM‑augmented ECG model using the llm_modeling.py script. Uses the same pretrained model checkpoint as discussed for upperbound experiments. 
+This command is running inference with an LLM‑augmented ECG model using the llm_modeling.py script. Uses the same pretrained model checkpoint as discussed for upperbound experiments. 
 - python llm_modeling/llm_modeling.py
 Launches the custom script that integrates ECG encoders with large language models (LLMs).
 - +openai_model=$model_name
