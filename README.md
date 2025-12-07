@@ -15,16 +15,15 @@ This repository contains the code used for Electrocardiogram–Language Model fo
 # Motivation
 Electrocardiogram (ECG) interpretation is a complex clinical task that requires specialized expertise to connect raw physiological signals with nuanced clinical queries expressed in natural language. However, the scarcity of labeled ECG data and the diversity of diagnostic questions make it difficult to build robust and adaptable systems. Replicating the ECG-QA paper is motivated by the need to validate a multimodal meta-learning approach that integrates pre-trained ECG encoders with large language models. By reproducing these experiments, we aim to assess the framework’s ability to generalize to unseen diagnostic tasks and confirm its potential to advance automated clinical reasoning in data-constrained scenarios. Also, both OpenAI models as well as others like google/llama-3-1.8B and meta/gemma-2-2b (latter were used in the paper) can be integrated with the meta learning framework to generate real-time responses for questions of different types asked for specific ECG waveforms with significant accuracy. 
 
-# Data setup
+# Data download and setup
 Before starting on the modeling and experimentation aspects, I would like to highlight the prerequisites in terms of ECG waveforms and Question Answer related data access.
-Data Extraction
 1. PTB-XL: This ECG repository is available to access in multiple ways explained in Physionet (https://physionet.org/content/ptb-xl/1.0.3/). The approach taken by me was to download the .ZIP file as a one-time effort, extract all data files from the same and store in local drive to run the preprocessing and modeling steps. For running some specific steps where the data volume was significant and I needed the processing to complete sooner, I ran them on a paid GPU Google Colab environment even though this is not mandatory. For this specific scenario, I connected to the data using the .ZIP file (uploaded in Google Drive) approach and extracted the files dynamically during runtime.
 
       $ from google.colab import drive drive.mount('/content/drive', force_remount=True)
       $ with zipfile.ZipFile("/content/drive/MyDrive/DL4H/ECG_Datasets/ptb-xl-raw-dataset.zip", 'r') as zip_ref:
                zip_ref.extractall("/content/datasets/")
 
-3. MIMIC-IV-ECG: This is a much larger ECG dataset also available in Physionet (https://www.physionet.org/content/mimic-iv-ecg/1.0/). The detailed steps to download and use this data is provided in the given link. The approach I used for this dataset is the same as for PTB-XL.
+2. MIMIC-IV-ECG: This is a much larger ECG dataset also available in Physionet (https://www.physionet.org/content/mimic-iv-ecg/1.0/). The detailed steps to download and use this data is provided in the given link. The approach I used for this dataset is the same as for PTB-XL.
 
       $ from google.colab import drive drive.mount('/content/drive', force_remount=True)
       $ with zipfile.ZipFile("/content/drive/MyDrive/DL4H/ECG_Datasets/mimic-iv-raw-dataset.zip", 'r') as zip_ref:
