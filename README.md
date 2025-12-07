@@ -216,7 +216,7 @@ Together, this pipeline fine‑tunes a pretrained ECG encoder with classificatio
 - python llm_modeling/llm_modeling.py
 Launches the custom script that integrates ECG encoders with large language models (LLMs).
 - +openai_model=$model_name
-Specifies which OpenAI model to use (e.g., gpt-4, gpt-3.5-turbo, etc.).
+Specifies which OpenAI model to use (e.g., gpt-4.1 etc.).
 - +openai_api_key=$api_key
 Passes your OpenAI API key so the script can query the LLM.
 - +ptbxl_or_mimic_iv=ptbxl
