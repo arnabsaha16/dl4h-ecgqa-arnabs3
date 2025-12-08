@@ -39,7 +39,7 @@ def sample_ecg_data(df, label_col, proportion, dataset_root, output_root,
                     if os.path.exists(src):
                         shutil.copy(src, dst)
 
-        regenerate_ptbxl_metadata(sampled_df, dataset_root, output_root)
+        #regenerate_ptbxl_metadata(sampled_df, dataset_root, output_root)
 
     elif dataset_type == "mimic":
         # Sample subjects, then include all their studies
@@ -60,7 +60,7 @@ def sample_ecg_data(df, label_col, proportion, dataset_root, output_root,
                 if os.path.exists(src):
                     shutil.copy(src, dst)
 
-        regenerate_mimic_metadata(sampled_df, dataset_root, output_root)
+        #regenerate_mimic_metadata(sampled_df, dataset_root, output_root)
 
     return sampled_df
 
@@ -222,4 +222,5 @@ if __name__ == "__main__":
     )
 
     print(f"Sampling complete! {len(sampled_df)} records selected.")
+
     print(f"Subset saved to: {args.output_root}")
